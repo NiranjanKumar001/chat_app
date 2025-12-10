@@ -11,7 +11,7 @@ const Sidebar = ({ onSelectUser }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/user/getall', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/getall`, {
           withCredentials: true
         });
         if (response.data.success || response.data.sucess) {

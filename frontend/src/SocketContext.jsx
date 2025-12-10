@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
         // Only connect if user is authenticated
         if (user?._id) {
             // Create socket connection
-            const newSocket = io('http://localhost:4000', {
+            const newSocket = io(import.meta.env.VITE_API_URL, {
                 withCredentials: true
             });
 

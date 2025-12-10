@@ -21,7 +21,7 @@ app.use(cookieParser())
 //middleware
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:5174", "https://chat-app-xkod.vercel.app"],
   credentials: true
 }));
 
@@ -36,6 +36,12 @@ const port = process.env.PORT || 4000;
 import { setupSocket } from './config/socket.js';
 const httpServer = setupSocket(app);
 
-httpServer.listen(port, () => {
+// For Vercel serverless deployment
+if (process.env.NODE_ENV !== 'production') {
+  httpServer.listen(port, () => {
     console.log(`Server and Socket.IO are running on port ${port}`);
-});
+  });
+}
+
+// Export for Vercel
+export default app;

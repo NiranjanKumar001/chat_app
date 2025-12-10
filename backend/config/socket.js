@@ -9,7 +9,7 @@ export function setupSocket(app) {
     // Create Socket.IO server with CORS configuration
     const io = new Server(httpServer, {
         cors: {
-            origin: ["http://localhost:5173", "http://localhost:5174"], // Your React app URLs
+            origin: ["http://localhost:5173", "http://localhost:5174", "https://chat-app-xkod.vercel.app"], // Your React app URLs
             methods: ["GET", "POST"],
             credentials: true
         }

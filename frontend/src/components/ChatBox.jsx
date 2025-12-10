@@ -56,7 +56,7 @@ const ChatBox = ({ selectedUser }) => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:4000/api/conversation/p1/${selectedUser._id}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/conversation/p1/${selectedUser._id}`, {
         withCredentials: true
       });
       
@@ -85,7 +85,7 @@ const ChatBox = ({ selectedUser }) => {
       console.log('Sending message:', messageText);
       // Send via HTTP API for reliability
       const response = await axios.post(
-        `http://localhost:4000/api/message/p1/${selectedUser._id}`,
+        `${import.meta.env.VITE_API_URL}/api/message/p1/${selectedUser._id}`,
         { message: messageText },
         { withCredentials: true }
       );
