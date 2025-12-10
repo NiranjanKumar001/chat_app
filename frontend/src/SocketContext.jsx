@@ -13,7 +13,7 @@ export const SocketProvider = ({ children }) => {
         // Only connect if user is authenticated
         if (user?._id) {
             // Create socket connection
-            const newSocket = io('http://localhost:3001', {
+            const newSocket = io('http://localhost:4000', {
                 withCredentials: true
             });
 

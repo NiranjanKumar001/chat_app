@@ -11,10 +11,10 @@ const Sidebar = ({ onSelectUser }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/user/getall', {
+        const response = await axios.get('http://localhost:4000/api/user/getall', {
           withCredentials: true
         });
-        if (response.data.success) {
+        if (response.data.success || response.data.sucess) {
           setUsers(response.data.alluser);
         }
       } catch (err) {
@@ -37,7 +37,7 @@ const Sidebar = ({ onSelectUser }) => {
   }
 
   return (
-    <div className="w-1/4 bg-gray-100 h-screen border-r border-gray-300">
+    <div className="w-80 bg-gray-100 flex flex-col border-r border-gray-300">
       <div className="p-4 border-b border-gray-300 bg-white">
         <div className="flex items-center space-x-3">
           <img 
@@ -51,7 +51,7 @@ const Sidebar = ({ onSelectUser }) => {
           </div>
         </div>
       </div>
-      <div className="overflow-y-auto h-[calc(100vh-80px)]">
+      <div className="overflow-y-auto flex-1">
         {users.map((otherUser) => (
           <div
             key={otherUser._id}

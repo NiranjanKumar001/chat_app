@@ -28,9 +28,8 @@ const send_message =async(req ,res)=>{
     })
     if (newMessage){
         isConveserationPresent.messages.push(newMessage._id)
+        await isConveserationPresent.save()
     }
-
-    await isConveserationPresent.save()
     res.status(201).json({
         sucess:true,
         message:"Message succesfully delivered...",
@@ -50,6 +49,11 @@ const recive_message=async (req,res)=>{
         res.status(201).json({
             sucess:true,
             data:ispresent
+        })
+    } else {
+        res.status(200).json({
+            sucess:true,
+            data: { messages: [] }
         })
     }
 }

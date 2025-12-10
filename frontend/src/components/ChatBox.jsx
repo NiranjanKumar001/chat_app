@@ -10,25 +10,42 @@ const ChatBox = ({ selectedUser }) => {
   const { user } = useAuth();
   const { socket, connected, joinRoom, sendMessage: socketSendMessage } = useSocket();
   const messagesEndRef = useRef(null);
-  const [optimisticMessages, setOptimisticMessages] = useState([]);
 
   useEffect(() => {
     if (selectedUser && socket) {
       // Create a unique room ID for the conversation
       const roomId = [user._id, selectedUser._id].sort().join('-');
+      
+      // Clear messages first to prevent showing old conversation
+      setMessages([]);
+      
       joinRoom(roomId);
 
       // Listen for incoming messages
-      socket.on('receive_message', (message) => {
-        setMessages(prev => [...prev, message]);
-      });
+      const handleReceiveMessage = (message) => {
+        console.log('Received message:', message);
+        setMessages(prev => {
+          // Avoid duplicates by checking both _id and timestamp
+          const isDuplicate = prev.some(m => 
+            m._id === message._id || 
+            (m.message === message.message && 
+             Math.abs(new Date(m.createdAt) - new Date(message.createdAt)) < 1000)
+          );
+          if (isDuplicate) {
+            return prev;
+          }
+          return [...prev, message];
+        });
+      };
+
+      socket.on('receive_message', handleReceiveMessage);
 
       // Cleanup socket listener when component unmounts or user changes
       return () => {
-        socket.off('receive_message');
+        socket.off('receive_message', handleReceiveMessage);
       };
     }
-  }, [selectedUser, socket, user._id]);
+  }, [selectedUser, socket, user._id, joinRoom]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -39,14 +56,16 @@ const ChatBox = ({ selectedUser }) => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:3001/api/conversation/p1/${selectedUser._id}`, {
+      const response = await axios.get(`http://localhost:4000/api/conversation/p1/${selectedUser._id}`, {
         withCredentials: true
       });
       
       if (response.data.sucess) {
         // The messages are in response.data.data.messages after population
         const conversationData = response.data.data;
-        setMessages(conversationData.messages || []);
+        setMessages(conversationData?.messages || []);
+      } else {
+        setMessages([]);
       }
     } catch (err) {
       console.error('Error fetching messages:', err);
@@ -59,33 +78,44 @@ const ChatBox = ({ selectedUser }) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedUser) return;
 
-    // Create optimistic message
-    const optimisticMessage = {
-      _id: Date.now().toString(),
-      senderId: user._id,
-      reciverId: selectedUser._id,
-      message: newMessage,
-      createdAt: new Date(),
-      isOptimistic: true
-    };
-
-    // Add optimistic message to UI
-    setMessages(prev => [...prev, optimisticMessage]);
-    setOptimisticMessages(prev => [...prev, optimisticMessage._id]);
+    const messageText = newMessage;
     setNewMessage('');
 
     try {
-      // Emit socket event
-      socketSendMessage({
-        senderId: user._id,
-        receiverId: selectedUser._id,
-        message: newMessage
-      });
+      console.log('Sending message:', messageText);
+      // Send via HTTP API for reliability
+      const response = await axios.post(
+        `http://localhost:4000/api/message/p1/${selectedUser._id}`,
+        { message: messageText },
+        { withCredentials: true }
+      );
+
+      console.log('Message sent response:', response.data);
+
+      if (response.data.sucess) {
+        // Also emit socket event for real-time delivery
+        if (socket && connected) {
+          socketSendMessage({
+            senderId: user._id,
+            receiverId: selectedUser._id,
+            message: messageText
+          });
+        } else {
+          // If socket not connected, add message to local state manually
+          const newMsg = response.data.data;
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.some(m => m._id === newMsg._id)) {
+              return prev;
+            }
+            return [...prev, newMsg];
+          });
+        }
+      }
     } catch (err) {
       console.error('Error sending message:', err);
-      // Remove optimistic message if failed
-      setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
-      setOptimisticMessages(prev => prev.filter(id => id !== optimisticMessage._id));
+      alert('Failed to send message. Please try again.');
+      setNewMessage(messageText); // Restore the message
     }
   };
 
@@ -109,15 +139,21 @@ const ChatBox = ({ selectedUser }) => {
     <div className="flex-1 flex flex-col h-screen">
       {/* Chat Header */}
       <div className="p-4 border-b border-gray-300 bg-white">
-        <div className="flex items-center space-x-3">
-          <img
-            src={selectedUser.profilephoto}
-            alt={selectedUser.username}
-            className="w-10 h-10 rounded-full"
-          />
-          <div>
-            <h2 className="font-semibold">{selectedUser.fullname}</h2>
-            <p className="text-sm text-gray-500">@{selectedUser.username}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <img
+              src={selectedUser.profilephoto}
+              alt={selectedUser.username}
+              className="w-10 h-10 rounded-full"
+            />
+            <div>
+              <h2 className="font-semibold">{selectedUser.fullname}</h2>
+              <p className="text-sm text-gray-500">@{selectedUser.username}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-xs text-gray-500">{connected ? 'Connected' : 'Disconnected'}</span>
           </div>
         </div>
       </div>
@@ -127,16 +163,18 @@ const ChatBox = ({ selectedUser }) => {
         {loading ? (
           <div className="text-center">Loading messages...</div>
         ) : (
-          messages.map((message) => (
+          messages.map((message) => {
+            const isSender = message.senderId === user._id || message.senderId?._id === user._id;
+            return (
             <div
               key={message._id}
               className={`flex ${
-                message.senderId === user._id ? 'justify-end' : 'justify-start'
+                isSender ? 'justify-end' : 'justify-start'
               }`}
             >
               <div
                 className={`max-w-[70%] p-3 rounded-lg ${
-                  message.senderId === user._id
+                  isSender
                     ? 'bg-blue-500 text-white'
                     : 'bg-white border border-gray-300'
                 }`}
@@ -147,7 +185,8 @@ const ChatBox = ({ selectedUser }) => {
                 </p>
               </div>
             </div>
-          ))
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>

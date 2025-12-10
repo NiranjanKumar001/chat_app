@@ -14,7 +14,7 @@ router.post('/register',controllers.register)
 router.post('/login',controllers.login)
 
 //user routes for logout....
-router.get('/logout',isauthenticated,controllers.logout)
+router.post('/logout',isauthenticated,controllers.logout)
 
 //dummy func testing for authentication purpose....
 router.get('/demo',isauthenticated,controllers.demo)

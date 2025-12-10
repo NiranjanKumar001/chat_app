@@ -25,7 +25,7 @@ export default function Signup() {
 
     try {
       const res = await axios.post(
-        "http://localhost:3001/api/user/register",
+        "http://localhost:4000/api/user/register",
         { fullname, username, password, gender },
         { withCredentials: true }
       );
@@ -33,7 +33,7 @@ export default function Signup() {
       if (res.data.sucess) {
         // Show success message and redirect to login page
         alert("Account created successfully! Please login.");
-        navigate("/");
+        navigate("/", { replace: true });
       } else {
         setError(res.data.message);
       }

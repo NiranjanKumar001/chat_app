@@ -54,7 +54,7 @@ const login=async(req,res)=>{
             userid:exsistuser._id
         }
         const token= jwt.sign(tokendata,process.env.JWT_SECRET_KEY,{expiresIn:'1d'})
-        return res.status(200).cookie("token",token,{ maxage:1*24*60*60*1000 , httpOnly :true ,sameSite :"strict"}).json({
+        return res.status(200).cookie("token",token,{ maxAge:1*24*60*60*1000 , httpOnly :true ,sameSite :"strict"}).json({
             sucess: true,
             message: `User : ${exsistuser.username} logedin sucessfully...`,
             user: {

@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       const isAuthenticated = localStorage.getItem('isAuthenticated');
       
       if (isAuthenticated) {
-        const response = await axios.get('http://localhost:3001/api/user/current', {
+        const response = await axios.get('http://localhost:4000/api/user/current', {
           withCredentials: true,
         });
         
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // We don't need to make the login request here since it's already done in the Login component
       // Just verify the current session
-      const verifyResponse = await axios.get('http://localhost:3001/api/user/current', {
+      const verifyResponse = await axios.get('http://localhost:4000/api/user/current', {
         withCredentials: true
       });
       
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:3001/api/user/logout', {}, {
+      await axios.post('http://localhost:4000/api/user/logout', {}, {
         withCredentials: true
       });
     } catch (error) {
@@ -73,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       localStorage.removeItem('isAuthenticated');
+      // Navigation will be handled by the component calling logout
     }
   };
 

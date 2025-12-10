@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import ChatBox from '../components/ChatBox';
 
 function Messages() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -14,6 +14,11 @@ function Messages() {
       navigate('/');
     }
   }, [user, authLoading, navigate]);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
+  };
 
   if (authLoading) {
     return (
@@ -29,7 +34,15 @@ function Messages() {
 
   return (
     <div className="flex h-screen">
-      <Sidebar onSelectUser={setSelectedUser} />
+      <div className="flex flex-col">
+        <Sidebar onSelectUser={setSelectedUser} />
+        <button 
+          onClick={handleLogout}
+          className="p-3 bg-red-500 text-white hover:bg-red-600 transition-colors"
+        >
+          Logout
+        </button>
+      </div>
       <ChatBox selectedUser={selectedUser} />
     </div>
   );
